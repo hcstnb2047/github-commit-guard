@@ -1,0 +1,23 @@
+[
+    {
+      "id": 1,
+      "priority": 1,
+      "action": {
+        "type": "redirect",
+        "redirect": {
+          "url": "chrome-extension://[EXTENSION_ID]/blocked.html"
+        }
+      },
+      "condition": {
+        "urlFilter": "*",
+        "domains": [
+          "twitter.com",
+          "youtube.com",
+          "facebook.com",
+          "instagram.com",
+          "tiktok.com",
+          "reddit.com"
+        ]
+      }
+    }
+  ]
