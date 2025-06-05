@@ -1,33 +1,85 @@
-// GitHub Commit Guard - Background Script
+// GitHub Commit Timer - Background Script
 
 const GITHUB_API_URL = 'https://api.github.com';
-const CHECK_INTERVAL = 30 * 60 * 1000; // 30分間隔
-const BLOCKED_PAGE_URL = chrome.runtime.getURL('blocked.html');
+const CHECK_INTERVAL = 2 * 60 * 1000; // 2分間隔（基本）
+const FREQUENT_CHECK_INTERVAL = 30 * 1000; // 30秒間隔（頻繁チェック）
+const REALTIME_CHECK_INTERVAL = 10 * 1000; // 10秒間隔（リアルタイム）
+const TIMER_PAGE_URL = chrome.runtime.getURL('timer.html');
 
-// GitHubのコントリビューション状況をチェック
+// チェック頻度管理
+let currentCheckInterval = CHECK_INTERVAL;
+let checkIntervalId = null;
+let lastCommitCheckTime = null;
+let isRestricted = false;
+
+// レート制限管理
+let apiCallsThisHour = 0;
+let hourlyResetTime = Date.now() + 60 * 60 * 1000;
+
+// 適応的チェック間隔の決定
+function getAdaptiveCheckInterval(commitStatus) {
+  const now = Date.now();
+  
+  // レート制限チェック
+  if (now > hourlyResetTime) {
+    apiCallsThisHour = 0;
+    hourlyResetTime = now + 60 * 60 * 1000;
+  }
+  
+  // 残りAPI呼び出し回数を計算
+  const remainingCalls = 5000 - apiCallsThisHour; // 認証済みユーザーの制限
+  const remainingHours = (hourlyResetTime - now) / (1000 * 60 * 60);
+  const callsPerHour = remainingCalls / remainingHours;
+  
+  // コミット状況に応じて間隔を調整
+  if (!commitStatus || !commitStatus.hasRecentCommit) {
+    // 制限中：より頻繁にチェック（コミット検出のため）
+    if (callsPerHour > 120) { // 2分に1回以上可能
+      return REALTIME_CHECK_INTERVAL; // 10秒
+    } else if (callsPerHour > 60) { // 1分に1回以上可能
+      return FREQUENT_CHECK_INTERVAL; // 30秒
+    } else {
+      return CHECK_INTERVAL; // 2分
+    }
+  } else {
+    // 正常状態：標準間隔
+    return CHECK_INTERVAL; // 2分
+  }
+}
+
+// GitHubのコントリビューション状況をチェック（複数エンドポイント使用）
 async function checkGitHubContributions(username, token) {
   try {
+    apiCallsThisHour++;
+    
     const headers = {
       'Authorization': `token ${token}`,
       'Accept': 'application/vnd.github.v3+json'
     };
     
-    // 最近のイベントを取得
-    const response = await fetch(`${GITHUB_API_URL}/users/${username}/events`, {
-      headers: headers
-    });
+    // 並列で複数のエンドポイントをチェック
+    const [eventsResponse, userResponse] = await Promise.all([
+      fetch(`${GITHUB_API_URL}/users/${username}/events?per_page=10`, { headers }),
+      fetch(`${GITHUB_API_URL}/user`, { headers }) // 認証確認も兼ねる
+    ]);
     
-    if (!response.ok) {
-      throw new Error(`GitHub API エラー: ${response.status}`);
+    if (!eventsResponse.ok) {
+      throw new Error(`GitHub API エラー: ${eventsResponse.status}`);
     }
     
-    const events = await response.json();
+    const events = await eventsResponse.json();
+    const userData = await userResponse.json();
     
     // プッシュイベントをフィルタリング
     const pushEvents = events.filter(event => event.type === 'PushEvent');
     
     if (pushEvents.length === 0) {
-      return { hasRecentCommit: false, lastCommitDate: null };
+      return { 
+        hasRecentCommit: false, 
+        lastCommitDate: null,
+        username: userData.login,
+        apiCallsRemaining: 5000 - apiCallsThisHour
+      };
     }
     
     // 最新のコミット日時を取得
@@ -36,25 +88,69 @@ async function checkGitHubContributions(username, token) {
     const now = new Date();
     const hoursSinceLastCommit = (now - lastCommitDate) / (1000 * 60 * 60);
     
+    // さらに詳細なコミット情報を取得
+    const recentCommit = hoursSinceLastCommit <= 0.5; // 30分以内
+    
     return {
-      hasRecentCommit: hoursSinceLastCommit <= 24, // 24時間以内
+      hasRecentCommit: hoursSinceLastCommit <= 24,
+      recentCommit: recentCommit,
       lastCommitDate: lastCommitDate,
-      hoursSinceLastCommit: Math.floor(hoursSinceLastCommit)
+      hoursSinceLastCommit: Math.floor(hoursSinceLastCommit * 100) / 100, // 小数点2桁
+      minutesSinceLastCommit: Math.floor(hoursSinceLastCommit * 60),
+      username: userData.login,
+      apiCallsRemaining: 5000 - apiCallsThisHour,
+      latestCommitMessage: latestPush.payload?.commits?.[0]?.message || 'No message'
     };
     
   } catch (error) {
     console.error('GitHub API チェックエラー:', error);
-    return { hasRecentCommit: true, error: error.message }; // エラー時はブロックしない
+    return { 
+      hasRecentCommit: true, 
+      error: error.message,
+      apiCallsRemaining: 5000 - apiCallsThisHour
+    };
   }
 }
 
-// ブロックルールを更新
-async function updateBlockingRules(shouldBlock, blockedSites) {
-  if (!shouldBlock || blockedSites.length === 0) {
-    // ルールをクリア
+// Webhook風のコミット検出（GitHub APIの補助）
+async function checkRecentCommitActivity(username, token) {
+  try {
+    const headers = {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json'
+    };
+    
+    // 最近のリポジトリアクティビティをチェック
+    const reposResponse = await fetch(
+      `${GITHUB_API_URL}/user/repos?sort=pushed&direction=desc&per_page=5`, 
+      { headers }
+    );
+    
+    if (reposResponse.ok) {
+      const repos = await reposResponse.json();
+      const recentlyPushed = repos.filter(repo => {
+        const pushedAt = new Date(repo.pushed_at);
+        const now = new Date();
+        return (now - pushedAt) < 5 * 60 * 1000; // 5分以内
+      });
+      
+      return recentlyPushed.length > 0;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('リポジトリアクティビティチェックエラー:', error);
+    return false;
+  }
+}
+
+// タイマー制限ルールを更新
+async function updateTimerRules(shouldLimit, allowedSites, timeLimit) {
+  if (!shouldLimit || allowedSites.length === 0) {
     await chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [1]
     });
+    isRestricted = false;
     return;
   }
   
@@ -63,11 +159,11 @@ async function updateBlockingRules(shouldBlock, blockedSites) {
     priority: 1,
     action: {
       type: 'redirect',
-      redirect: { url: BLOCKED_PAGE_URL }
+      redirect: { url: `${TIMER_PAGE_URL}?timeLimit=${timeLimit}` }
     },
     condition: {
       urlFilter: '*',
-      domains: blockedSites
+      excludedDomains: ['github.com', 'localhost', '127.0.0.1', ...allowedSites]
     }
   };
   
@@ -75,45 +171,102 @@ async function updateBlockingRules(shouldBlock, blockedSites) {
     addRules: [rule],
     removeRuleIds: [1]
   });
+  
+  isRestricted = true;
 }
 
-// 定期チェック
-async function performPeriodicCheck() {
-  const config = await chrome.storage.local.get(['username', 'token', 'blockedSites', 'enabled']);
+// 適応的チェックスケジューラー
+function scheduleNextCheck(commitStatus) {
+  // 現在のインターバルをクリア
+  if (checkIntervalId) {
+    clearTimeout(checkIntervalId);
+  }
   
-  if (!config.enabled || !config.username || !config.token || !config.blockedSites) {
+  // 新しい間隔を決定
+  const newInterval = getAdaptiveCheckInterval(commitStatus);
+  
+  // 間隔が変わった場合はログ出力
+  if (newInterval !== currentCheckInterval) {
+    console.log(`チェック間隔変更: ${currentCheckInterval/1000}s → ${newInterval/1000}s`);
+    currentCheckInterval = newInterval;
+  }
+  
+  // 次回チェックをスケジュール
+  checkIntervalId = setTimeout(performPeriodicCheck, newInterval);
+}
+
+// 定期チェック（改良版）
+async function performPeriodicCheck() {
+  const config = await chrome.storage.local.get([
+    'username', 'token', 'allowedSites', 'enabled', 'timeLimit', 'realtimeMode'
+  ]);
+  
+  if (!config.enabled || !config.username || !config.token) {
+    scheduleNextCheck(null);
     return;
   }
   
+  // メインのコミットチェック
   const result = await checkGitHubContributions(config.username, config.token);
   
+  // 制限中かつリアルタイムモードの場合、追加チェック
+  if (!result.hasRecentCommit && config.realtimeMode && apiCallsThisHour < 4800) {
+    const recentActivity = await checkRecentCommitActivity(config.username, config.token);
+    if (recentActivity) {
+      // 最新の詳細情報を再取得
+      const updatedResult = await checkGitHubContributions(config.username, config.token);
+      Object.assign(result, updatedResult);
+    }
+  }
+  
   // 結果を保存
+  const now = new Date().toISOString();
   await chrome.storage.local.set({
-    lastCheck: new Date().toISOString(),
-    commitStatus: result
+    lastCheck: now,
+    commitStatus: result,
+    nextCheckIn: currentCheckInterval / 1000,
+    apiCallsThisHour: apiCallsThisHour
   });
   
-  // ブロック状態を更新
-  const shouldBlock = !result.hasRecentCommit && !result.error;
-  await updateBlockingRules(shouldBlock, config.blockedSites);
+  // タイマー制限状態を更新
+  const shouldLimit = !result.hasRecentCommit && !result.error;
+  await updateTimerRules(shouldLimit, config.allowedSites || [], config.timeLimit || 2);
   
   // バッジを更新
-  const badgeText = shouldBlock ? '×' : '✓';
-  const badgeColor = shouldBlock ? '#ff4444' : '#44ff44';
+  if (result.recentCommit) {
+    chrome.action.setBadgeText({ text: '🔥' });
+    chrome.action.setBadgeBackgroundColor({ color: '#fd7e14' });
+  } else if (shouldLimit) {
+    chrome.action.setBadgeText({ text: '⏱️' });
+    chrome.action.setBadgeBackgroundColor({ color: '#ff6b35' });
+  } else {
+    chrome.action.setBadgeText({ text: '✅' });
+    chrome.action.setBadgeBackgroundColor({ color: '#28a745' });
+  }
   
-  chrome.action.setBadgeText({ text: badgeText });
-  chrome.action.setBadgeBackgroundColor({ color: badgeColor });
+  // 次回チェックをスケジュール
+  scheduleNextCheck(result);
+  
+  // 状態変化時は通知（オプション）
+  if (result.recentCommit && isRestricted) {
+    chrome.notifications?.create({
+      type: 'basic',
+      iconUrl: 'icons/icon48.png',
+      title: 'コミット検出！',
+      message: '新しいコミットが検出されました。制限が解除されます。'
+    });
+  }
 }
 
 // 拡張機能インストール時の初期化
 chrome.runtime.onInstalled.addListener(async () => {
-  // デフォルト設定
   await chrome.storage.local.set({
     enabled: false,
     username: '',
     token: '',
-    blockedSites: ['twitter.com', 'youtube.com', 'facebook.com'],
-    checkInterval: 24 // 時間単位
+    allowedSites: ['github.com', 'stackoverflow.com', 'developer.mozilla.org'],
+    timeLimit: 2,
+    realtimeMode: true // リアルタイムモードをデフォルトで有効
   });
   
   chrome.action.setBadgeText({ text: '?' });
@@ -124,15 +277,29 @@ chrome.runtime.onStartup.addListener(() => {
   performPeriodicCheck();
 });
 
-// 定期実行の設定
-setInterval(performPeriodicCheck, CHECK_INTERVAL);
-
-// 初回実行
-performPeriodicCheck();
+// 手動チェック要求への対応
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'checkNow') {
+    performPeriodicCheck();
+    sendResponse({ status: 'checking' });
+  } else if (request.action === 'timerCompleted') {
+    chrome.tabs.update(sender.tab.id, { url: request.originalUrl });
+  } else if (request.action === 'getStatus') {
+    chrome.storage.local.get(['commitStatus', 'apiCallsThisHour', 'nextCheckIn'])
+      .then(data => sendResponse(data));
+    return true; // 非同期レスポンス
+  }
+});
 
 // ストレージ変更時の処理
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'local' && (changes.enabled || changes.username || changes.token || changes.blockedSites)) {
-    performPeriodicCheck();
+  if (namespace === 'local') {
+    const relevantChanges = ['enabled', 'username', 'token', 'allowedSites', 'timeLimit', 'realtimeMode'];
+    if (relevantChanges.some(key => changes[key])) {
+      performPeriodicCheck();
+    }
   }
 });
+
+// 初回実行
+performPeriodicCheck();

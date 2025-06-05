@@ -1,53 +1,52 @@
-
 {
-    "manifest_version": 3,
-    "name": "GitHub Commit Guard",
-    "version": "1.0.0",
-    "description": "ブロックサイトアクセス制御 - GitHubコントリビューションベース",
-    
-    "permissions": [
-      "webRequest",
-      "storage",
-      "tabs",
-      "declarativeNetRequest"
-    ],
-    
-    "host_permissions": [
-      "https://api.github.com/*",
-      "<all_urls>"
-    ],
-    
-    "background": {
-      "service_worker": "background.js"
-    },
-    
-    "action": {
-      "default_popup": "popup.html",
-      "default_title": "GitHub Commit Guard"
-    },
-    
-    "options_page": "options.html",
-    
-    "declarative_net_request": {
-      "rule_resources": [
-        {
-          "id": "block_rules",
-          "enabled": true,
-          "path": "rules.json"
-        }
-      ]
-    },
-    
-    "web_accessible_resources": [
+  "manifest_version": 3,
+  "name": "GitHub Commit Timer",
+  "version": "1.0.0",
+  "description": "コミット習慣でサイトアクセス時間制御 - GitHubコントリビューションベース",
+  
+  "permissions": [
+    "webRequest",
+    "storage",
+    "tabs",
+    "declarativeNetRequest"
+  ],
+  
+  "host_permissions": [
+    "https://api.github.com/*",
+    "<all_urls>"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GitHub Commit Guard"
+  },
+  
+  "options_page": "options.html",
+  
+  "declarative_net_request": {
+    "rule_resources": [
       {
-        "resources": ["blocked.html"],
-        "matches": ["<all_urls>"]
+        "id": "block_rules",
+        "enabled": true,
+        "path": "rules.json"
       }
-    ],
-    
-    "icons": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+    ]
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html"],
+      "matches": ["<all_urls>"]
     }
+  ],
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   }
+}

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>コミットタイマー - GitHub Commit Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .github-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+        
+        .github-logo {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .github-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+        
+        .timer-circle {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 40px;
+            position: relative;
+        }
+        
+        .timer-circle svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        
+        .timer-circle .background {
+            fill: none;
+            stroke: #21262d;
+            stroke-width: 8;
+        }
+        
+        .timer-circle .progress {
+            fill: none;
+            stroke: #fd7e14;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+        
+        .timer-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+        
+        .message {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .message h2 {
+            font-size: 24px;
+            color: #fd7e14;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .message p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #7d8590;
+        }
+        
+        .motivation {
+            background: linear-gradient(135deg, #fd7e14 0%, #ff6b35 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 32px;
+            color: white;
+        }
+        
+        .motivation h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .motivation p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #238636;
+            border-color: #238636;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #21262d;
+            color: #f0f6fc;
+        }
+        
+        .btn:hover {
+            border-color: #58a6ff;
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary:hover {
+            background: #2ea043;
+        }
+        
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+        
+        .progress-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 32px;
+        }
+        
+        .info-card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            padding: 16px;
+        }
+        
+        .info-card .label {
+            font-size: 11px;
+            color: #7d8590;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .info-card .value {
+            font-size: 18px;
+            color: #f0f6fc;
+            font-weight: 600;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .timer-display {
+            animation: pulse 2s infinite;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .github-header h1 {
+                font-size: 24px;
+            }
+            
+            .timer-circle {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .timer-display {
+                font-size: 28px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="github-header">
+            <svg class="github-logo" fill="#f0f6fc" viewBox="0 0 16 16">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            <h1>コミットタイマー</h1>
+        </div>
+        
+        <div class="timer-circle">
+            <svg>
+                <circle class="background" cx="100" cy="100" r="90"></circle>
+                <circle class="progress" cx="100" cy="100" r="90" id="progressCircle"></circle>
+            </svg>
+            <div class="timer-display" id="timerDisplay">2:00</div>
+        </div>
+        
+        <div class="message">
+            <h2>⏱️ アクセス制限中</h2>
+            <p>
+                GitHubにコミットしていないため、サイトアクセスが制限されています。<br>
+                タイマーが終了するまでお待ちいただくか、今すぐコミットして制限を解除してください。
+            </p>
+        </div>
+        
+        <div class="motivation">
+            <h3 id="motivationTitle">💡 今日のモチベーション</h3>
+            <p id="motivationText">継続は力なり。小さな一歩が大きな成果につながります。</p>
+        </div>
+        
+        <div class="actions">
+            <a href="https://github.com" class="btn btn-primary" target="_blank">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: text-bottom; margin-right: 4px;">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                今すぐコミットする
+            </a>
+            <button class="btn btn-secondary" onclick="skipTimer()">
+                ⏭️ 今回スキップ
+            </button>
+        </div>
+        
+        <div class="progress-info">
+            <div class="info-card">
+                <div class="label">残り時間</div>
+                <div class="value" id="timeRemaining">2:00</div>
+            </div>
+            <div class="info-card">
+                <div class="label">最後のコミット</div>
+                <div class="value" id="lastCommit">24時間前</div>
+            </div>
+            <div class="info-card">
+                <div class="label">今日の制限回数</div>
+                <div class="value" id="todayBlocks">1回</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // モチベーションメッセージ
+        const motivationMessages = [
+            {
+                title: "💡 今日のモチベーション",
+                text: "継続は力なり。小さな一歩が大きな成果につながります。"
+            },
+            {
+                title: "🚀 コードの力",
+                text: "コードは書くもの、夢は実現するもの。今日から始めよう！"
+            },
+            {
+                title: "🔥 成長マインド",
+                text: "エラーは学習の機会。コミットは成長の証。"
+            },
+            {
+                title: "⭐ 小さな積み重ね",
+                text: "完璧なコードより、継続するコード。まずは1行から。"
+            },
+            {
+                title: "📈 進歩の証",
+                text: "昨日の自分より今日の自分。今日の自分より明日の自分。"
+            },
+            {
+                title: "🎯 価値の創造",
+                text: "プログラマーの価値は書いたコードの量ではなく、解決した問題の数。"
+            },
+            {
+                title: "💪 習慣の力",
+                text: "バグは友達、コミットは習慣、成長は結果。"
+            },
+            {
+                title: "⚡ 今この瞬間",
+                text: "今日コミットしなければ、明日の自分が後悔する。"
+            }
+        ];
+        
+        let timeLimit = 2; // 分
+        let remainingTime = timeLimit * 60; // 秒
+        let timerInterval;
+        
+        // URLパラメータから制限時間を取得
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlTimeLimit = urlParams.get('timeLimit');
+        if (urlTimeLimit) {
+            timeLimit = parseInt(urlTimeLimit);
+            remainingTime = timeLimit * 60;
+        }
+        
+        // 元のURLを取得
+        const originalUrl = urlParams.get('url') || document.referrer || 'https://github.com';
+        
+        // タイマー初期化
+        function initTimer() {
+            updateTimerDisplay();
+            updateProgressCircle();
+            
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+                updateProgressCircle();
+                
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    completeTimer();
+                }
+            }, 1000);
+        }
+        
+        // タイマー表示更新
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('timerDisplay').textContent = display;
+            document.getElementById('timeRemaining').textContent = display;
+        }
+        
+        // 進捗円の更新
+        function updateProgressCircle() {
+            const circle = document.getElementById('progressCircle');
+            const circumference = 2 * Math.PI * 90; // r=90
+            const progress = (timeLimit * 60 - remainingTime) / (timeLimit * 60);
+            const offset = circumference - (progress * circumference);
+            
+            circle.style.strokeDasharray = circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+        
+        // タイマー完了
+        function completeTimer() {
+            // 元のサイトにリダイレクト
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                chrome.runtime.sendMessage({
+                    action: 'timerCompleted',
+                    originalUrl: originalUrl
+                });
+            } else {
+                window.location.href = originalUrl;
+            }
+        }
+        
+        // スキップ機能
+        function skipTimer() {
+            if (confirm('本当にタイマーをスキップしますか？\nコミット習慣を身につけるため、完了まで待つことをおすすめします。')) {
+                clearInterval(timerInterval);
+                completeTimer();
+            }
+        }
+        
+        // ランダムなモチベーションメッセージを表示
+        function showRandomMotivation() {
+            const randomMessage = motivationMessages[Math.floor(Math.random() * motivationMessages.length)];
+            document.getElementById('motivationTitle').textContent = randomMessage.title;
+            document.getElementById('motivationText').textContent = randomMessage.text;
+        }
+        
+        // 統計情報を更新
+        function updateStats() {
+            // 最後のコミット時間を計算（仮のデータ）
+            const hoursAgo = Math.floor(Math.random() * 48) + 1;
+            document.getElementById('lastCommit').textContent = `${hoursAgo}時間前`;
+            
+            // 今日の制限回数（仮のデータ）
+            const blocksToday = Math.floor(Math.random() * 5) + 1;
+            document.getElementById('todayBlocks').textContent = `${blocksToday}回`;
+        }
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            showRandomMotivation();
+            updateStats();
+            initTimer();
+        });
+        
+        // 5分ごとにモチベーションメッセージを変更
+        setInterval(showRandomMotivation, 5 * 60 * 1000);
+    </script>
+</body>
+</html>
