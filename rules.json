@@ -5,7 +5,7 @@
       "action": {
         "type": "redirect",
         "redirect": {
-          "url": "chrome-extension://[EXTENSION_ID]/blocked.html"
+          "url": "https://github.com"
         }
       },
       "condition": {
