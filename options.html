@@ -1,290 +1,256 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
     <meta charset="utf-8">
     <title>GitHub Commit Timer - 設定</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            --primary: #238636;
+            --primary-hover: #2ea043;
+            --danger: #da3633;
+            --danger-hover: #f85149;
+            --bg: #161b22;
+            --bg-card: #21262d;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-muted: #7d8590;
+            --accent: #fd7e14;
+            --shadow: 0 4px 24px rgba(0,0,0,0.15);
         }
-        
+        html, body {
+            height: 100%;
+        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #e6edf3;
-            background: #0d1117;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             margin: 0;
-            padding: 0;
+            min-height: 100vh;
         }
-        
         .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
+            max-width: 540px;
+            margin: 40px auto 0 auto;
+            padding: 24px;
         }
-        
         .header {
             background: linear-gradient(135deg, #21262d 0%, #161b22 100%);
             color: #f0f6fc;
-            padding: 32px;
-            border-radius: 12px;
-            margin-bottom: 24px;
+            padding: 32px 24px 24px 24px;
+            border-radius: 18px;
+            margin-bottom: 32px;
             text-align: center;
-            border: 1px solid #30363d;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
         }
-        
         .header h1 {
             margin: 0 0 8px 0;
-            font-size: 28px;
-            font-weight: 600;
+            font-size: 2rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
         }
-        
         .header p {
             margin: 0;
             opacity: 0.8;
-            font-size: 16px;
+            font-size: 1rem;
         }
-        
         .card {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 24px 20px 24px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.2s;
         }
-        
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(35,134,54,0.08);
+        }
         .card h2 {
             margin: 0 0 20px 0;
-            font-size: 18px;
-            color: #fd7e14;
+            font-size: 1.2rem;
+            color: var(--accent);
             display: flex;
             align-items: center;
             gap: 8px;
             font-weight: 600;
         }
-        
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
-        
         .form-group:last-child {
             margin-bottom: 0;
         }
-        
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: #f0f6fc;
-            font-size: 14px;
+            color: var(--text);
+            font-size: 1rem;
         }
-        
-        input[type="text"], input[type="password"], input[type="number"], textarea {
+        input[type="text"], input[type="password"], input[type="number"] {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #0d1117;
-            color: #e6edf3;
-            transition: border-color 0.15s;
+            padding: 14px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--bg);
+            color: var(--text);
+            transition: border-color 0.18s, box-shadow 0.18s;
+            box-shadow: none;
         }
-        
-        input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, textarea:focus {
+        input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus {
             outline: none;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(35,134,54,0.15);
         }
-        
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
         .checkbox-group {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
-        
         .toggle {
             position: relative;
-            width: 50px;
-            height: 24px;
-            background: #30363d;
-            border-radius: 24px;
+            width: 48px;
+            height: 26px;
+            background: var(--border);
+            border-radius: 26px;
             cursor: pointer;
             transition: background 0.2s;
+            flex-shrink: 0;
         }
-        
         .toggle.active {
-            background: #238636;
+            background: var(--primary);
         }
-        
         .toggle::before {
             content: '';
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             background: #f0f6fc;
             border-radius: 50%;
             top: 2px;
             left: 2px;
-            transition: left 0.2s;
+            transition: left 0.2s, background 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.10);
         }
-        
         .toggle.active::before {
-            left: 28px;
+            left: 24px;
+            background: #fff;
         }
-        
         .btn {
-            background: #238636;
+            background: var(--primary);
             color: white;
-            border: 1px solid #238636;
-            padding: 12px 16px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
+            border: none;
+            padding: 14px 0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.15s;
+            width: 100%;
+            margin-top: 8px;
+            transition: background 0.18s, box-shadow 0.18s;
+            box-shadow: 0 2px 8px rgba(35,134,54,0.08);
         }
-        
         .btn:hover {
-            background: #2ea043;
-            border-color: #2ea043;
+            background: var(--primary-hover);
+            box-shadow: 0 4px 16px rgba(35,134,54,0.13);
         }
-        
         .btn:disabled {
-            background: #30363d;
-            border-color: #30363d;
-            color: #7d8590;
+            background: var(--border);
+            color: var(--text-muted);
             cursor: not-allowed;
         }
-        
         .btn-secondary {
-            background: #21262d;
-            border-color: #30363d;
-            color: #f0f6fc;
+            background: var(--bg-card);
+            color: var(--text);
+            border: 1.5px solid var(--border);
         }
-        
         .btn-secondary:hover {
-            background: #30363d;
+            background: var(--border);
         }
-        
         .help-text {
-            font-size: 12px;
-            color: #7d8590;
+            font-size: 0.92rem;
+            color: var(--text-muted);
             margin-top: 6px;
         }
-        
-        .help-text a {
-            color: #58a6ff;
-            text-decoration: none;
-        }
-        
-        .help-text a:hover {
-            text-decoration: underline;
-        }
-        
-        .status {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            border: 1px solid;
-        }
-        
-        .status.success {
-            background: rgba(35, 134, 54, 0.15);
-            color: #3fb950;
-            border-color: rgba(35, 134, 54, 0.4);
-        }
-        
-        .status.error {
-            background: rgba(218, 54, 51, 0.15);
-            color: #f85149;
-            border-color: rgba(218, 54, 51, 0.4);
-        }
-        
         .sites-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
             margin-top: 12px;
         }
-        
         .site-tag {
-            background: #21262d;
-            border: 1px solid #30363d;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 12px;
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            padding: 7px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #f0f6fc;
+            gap: 10px;
+            color: var(--text);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
         }
-        
         .site-tag .remove {
-            background: #da3633;
+            background: var(--danger);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            font-size: 10px;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             line-height: 1;
+            transition: background 0.18s;
         }
-        
         .site-tag .remove:hover {
-            background: #f85149;
+            background: var(--danger-hover);
         }
-        
         .input-group {
             display: flex;
-            gap: 8px;
+            gap: 10px;
         }
-        
         .input-group input {
             flex: 1;
         }
-        
-        .range-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .status {
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            border: 1.5px solid;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
         }
-        
-        .range-group input[type="range"] {
-            flex: 1;
-            height: 6px;
-            background: #30363d;
-            border-radius: 3px;
-            outline: none;
+        .status.success {
+            background: rgba(35, 134, 54, 0.15);
+            color: #3fb950;
+            border-color: rgba(35, 134, 54, 0.4);
         }
-        
-        .range-group input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #fd7e14;
-            border-radius: 50%;
-            cursor: pointer;
+        .status.error {
+            background: rgba(218, 54, 51, 0.15);
+            color: #f85149;
+            border-color: rgba(218, 54, 51, 0.4);
         }
-        
-        .range-value {
-            min-width: 60px;
-            text-align: center;
-            font-weight: 600;
-            color: #fd7e14;
+        @media (max-width: 600px) {
+            .container {
+                padding: 8px;
+            }
+            .header {
+                padding: 18px 8px 12px 8px;
+            }
+            .card {
+                padding: 14px 8px 10px 8px;
+            }
         }
     </style>
 </head>
@@ -295,289 +261,65 @@
                 <svg width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
                 </svg>
-                GitHub<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>GitHub Commit Guard - 設定</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #f5f7fa;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            margin: 0 0 10px 0;
-            font-size: 28px;
-            font-weight: 600;
-        }
-        
-        .header p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 16px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e1e8ed;
-        }
-        
-        .card h2 {
-            margin: 0 0 20px 0;
-            font-size: 20px;
-            color: #667eea;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #555;
-        }
-        
-        input[type="text"], input[type="password"], textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.2s;
-        }
-        
-        input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .toggle {
-            position: relative;
-            width: 50px;
-            height: 24px;
-            background: #ccc;
-            border-radius: 24px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .toggle.active {
-            background: #667eea;
-        }
-        
-        .toggle::before {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: left 0.2s;
-        }
-        
-        .toggle.active::before {
-            left: 28px;
-        }
-        
-        .btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn:hover {
-            background: #5a6fd8;
-            transform: translateY(-1px);
-        }
-        
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .help-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .status {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .sites-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        
-        .site-tag {
-            background: #f0f2f5;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .site-tag .remove {
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            font-size: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 GitHub Commit Guard</h1>
+                GitHub Commit Timer
+            </h1>
             <p>GitHubコントリビューションに基づくサイトアクセス制御</p>
         </div>
-        
         <div id="status" style="display: none;"></div>
-        
         <div class="card">
             <h2>⚙️ 基本設定</h2>
-            
             <div class="form-group">
                 <div class="checkbox-group">
                     <div class="toggle" id="enabledToggle"></div>
                     <label for="enabledToggle">拡張機能を有効にする</label>
                 </div>
             </div>
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <div class="toggle" id="realtimeModeToggle"></div>
+                    <label for="realtimeModeToggle">リアルタイムモードを有効にする</label>
+                </div>
+                <div class="help-text">ONにすると10〜30秒ごとにコミット状況を自動チェックします（API使用量が増えます）</div>
+            </div>
         </div>
-        
         <div class="card">
             <h2>👤 GitHub認証</h2>
-            
             <div class="form-group">
                 <label for="username">GitHubユーザー名</label>
                 <input type="text" id="username" placeholder="あなたのGitHubユーザー名">
                 <div class="help-text">例: octocat</div>
             </div>
-            
             <div class="form-group">
                 <label for="token">Personal Access Token</label>
                 <input type="password" id="token" placeholder="ghp_...">
                 <div class="help-text">
-                    <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings</a> 
-                    でトークンを作成してください。「repo」権限は不要です。
+                    <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings</a> でトークンを作成してください。「repo」権限は不要です。
                 </div>
             </div>
-            
             <button class="btn" id="testBtn">🔍 接続テスト</button>
         </div>
-        
         <div class="card">
             <h2>🚫 ブロック対象サイト</h2>
-            
             <div class="form-group">
                 <label for="newSite">新しいサイトを追加</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="newSite" placeholder="例: twitter.com" style="flex: 1;">
-                    <button class="btn" id="addSiteBtn">追加</button>
+                <div class="input-group">
+                    <input type="text" id="newSite" placeholder="例: twitter.com">
+                    <button class="btn btn-secondary" id="addSiteBtn">追加</button>
                 </div>
                 <div class="help-text">ドメイン名のみを入力してください（https:// は不要）</div>
             </div>
-            
             <div class="sites-list" id="sitesList"></div>
         </div>
-        
         <div class="card">
             <h2>📊 動作設定</h2>
-            
             <div class="form-group">
                 <label for="checkInterval">チェック間隔（時間）</label>
                 <input type="number" id="checkInterval" min="1" max="24" value="24">
                 <div class="help-text">何時間以内にコミットがない場合にブロックするか</div>
             </div>
         </div>
-        
-        <button class="btn" id="saveBtn" style="width: 100%; margin-top: 20px;">💾 設定を保存</button>
+        <button class="btn" id="saveBtn" style="margin-top: 20px;">💾 設定を保存</button>
     </div>
-
     <script src="options.js"></script>
 </body>
 </html>

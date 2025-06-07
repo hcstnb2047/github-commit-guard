@@ -7,8 +7,7 @@
   "permissions": [
     "webRequest",
     "storage",
-    "tabs",
-    "declarativeNetRequest"
+    "tabs"
   ],
   
   "host_permissions": [
@@ -26,23 +25,6 @@
   },
   
   "options_page": "options.html",
-  
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "block_rules",
-        "enabled": true,
-        "path": "rules.json"
-      }
-    ]
-  },
-  
-  "web_accessible_resources": [
-    {
-      "resources": ["blocked.html"],
-      "matches": ["<all_urls>"]
-    }
-  ],
   
   "icons": {
     "16": "icons/icon16.png",
